@@ -2,8 +2,94 @@
 title: "R Notebook"
 output: html_notebook
 ---
-#lego hw
 ```{r}
+remotes::install_github("rstudio-education/dsbox")
+library(tidyverse)
+library(dsbox)
+```
+## What are the three most common first names of purchasers?
 
+  - ### They are Jackson, Jacob, and Joseph
+```{r}
+lego_sales %>%
+  count(first_name)%>%
+  arrange(desc(n))
+```
+## What are the three most common themes of Lego sets purchased?
+
+  - ### They are Star Wars, Nexo Knights, and Gear
+```{r}
+lego_sales %>%
+  count(theme)%>%
+  arrange(desc(n))
+```
+## Among the most common theme of Lego sets purchased, what is the most common subtheme?
+
+  - ### They are NA, Ultimate, and The Force Awakens
+```{r}
+lego_sales %>%
+  filter(theme=="Star Wars"|theme=="Nexo Knights"|theme=="Gear")%>%
+  count(subtheme) %>%
+  arrange(desc(n))
+```
+## Create a new variable called age_group and group the ages into the following categories: “18 and under”, “19 - 25”, “26 - 35”, “36 - 50”, “51 and over”.
+
+  - ### please see the table below
+```{r}
+lego_sales$age_group <- lego_sales$age 
+lego_sales$age_group <- case_when(
+  lego_sales$age_group <= 18 ~ "18 and under",
+  lego_sales$age_group >=19&lego_sales$age_group<=25 ~ "19 - 25",
+  lego_sales$age_group >=26&lego_sales$age_group<=35 ~ "26 - 35",
+  lego_sales$age_group >=36&lego_sales$age_group<=50 ~ "36 - 50",
+  lego_sales$age_group >= 51 ~ "51 and over",
+)
+lego_sales
+```
+## Which age group has purchased the highest number of Lego sets.
+
+  - ### The 36-50 group has purchased the highest number of Lego sets
+```{r}
+lego_sales %>%
+  group_by(age_group) %>%
+  summarize(Count=n()) %>%
+  arrange(desc(Count))
 ```
 
+## Which age group has spent the most money on Legos?
+
+  - ### The 36-50 group has spent the most money on Legos
+```{r}
+lego_sales$money <- lego_sales$quantity * lego_sales$us_price
+arrange(summarise(group_by(lego_sales,age_group),money_spend=sum(quantity*us_price)),desc(money_spend))
+```
+## Which Lego theme has made the most money for Lego?
+
+  - ### The Star Wars has made the most money for Lego
+```{r}
+arrange(summarise(group_by(lego_sales,theme),theme_money_spend=sum(quantity*us_price)),desc(theme_money_spend))
+```
+
+## Which area code has spent the most money on Legos? In the US the area code is the first 3 digits of a phone number.
+
+  - ### If NA does not count, then area code "956" has spent the most money on Legos
+```{r}
+lego_sales$area_code <- str_sub(lego_sales$phone_number, 1, 3)
+lego_sales %>%
+  group_by(area_code) %>%
+  summarise(area_code_money_spend=sum(quantity*us_price)) %>%
+  arrange(desc(area_code_money_spend))
+```
+## What are the top 5 name that contributed the most sales for Lego
+
+  - ### From the graph below we can see the difference between the top 5 Lego name sold 
+
+```{r}
+name <- lego_sales %>%
+  group_by(name) %>%
+  summarise(name_money_spend=sum(quantity*us_price)) %>%
+  arrange(desc(name_money_spend))
+name <-  top_n(name,5)
+ggplot(data = name, aes(x = name_money_spend, y = name)) +
+  geom_point()
+```
